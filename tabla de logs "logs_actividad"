@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS `logs_actividad` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `usuario_id` INT(11) DEFAULT NULL,
+  `usuario_nombre` VARCHAR(150) DEFAULT NULL,
+  `rol` ENUM('admin','propietario','visitante') NOT NULL DEFAULT 'visitante',
+  `accion` VARCHAR(255) NOT NULL,
+  `fecha` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_usuario_id` (`usuario_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
