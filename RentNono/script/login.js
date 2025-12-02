@@ -36,3 +36,4 @@
         if(e.target === modalFondoRegistroPropietario) modalFondoRegistroPropietario.style.display = 'none';
         if(e.target === modalFondoRegistroVisitante) modalFondoRegistroVisitante.style.display = 'none';
     });
+    fetch("publicaciones.php?ajax=1&" + query)

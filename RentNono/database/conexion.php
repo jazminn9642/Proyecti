@@ -5,8 +5,6 @@
     //base de datos= uno la selecciona
     //usuario = root
     //contraseña = (vacio)
-
-    
     try{
         //new PDO("mysql:host=LOCALHOST;dbname=NOMBREDEBASEDEDATOS;charset=utf8", "usuario","contraseña")
         $conn = new PDO("mysql:host=localhost;dbname=rentnono;charset=utf8", "root","");

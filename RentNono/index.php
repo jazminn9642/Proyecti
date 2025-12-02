@@ -1,7 +1,19 @@
 <?php
-    include("database/session.php"); //verifica si tienes o no una sesion iniciada
-    include("database/publicaciones.php"); //muestra las publicaciones
-    include("login.php"); //ventanas emergented de inicio de sesion y registro de usuario
+ob_start(); // inicia el buffer
+include("database/session.php"); //verifica si tienes o no una sesion iniciada
+include("database/publicaciones.php"); //muestra las publicaciones
+include("login.php"); //ventanas emergented de inicio de sesion y registro de usuario
+
+if (isset($_SESSION['rol'])) {
+    if ($_SESSION['rol'] === 'visitante') {
+        header("Location: usuario_visitante/ixusuario.php");
+        exit;
+    } elseif ($_SESSION['rol'] === 'propietario') {
+        header("Location: usuario_propietario/index_propietario.php");
+        exit;
+    }
+}
+ob_end_flush(); // envía el buffer al navegador
 ?>
 
 <!DOCTYPE html>
@@ -12,6 +24,7 @@
     <title>RentNono | Inicio</title>
     <link rel="stylesheet" href="estilos/estilo.css">
     <link rel="stylesheet" href="estilos/publicaciones.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -19,16 +32,23 @@
     <!-- BARRA DE NAVEGACION PRINCIPAL -->
     <header class="main-header">
         <div class="container header-content">
-            <h1 class="site-logo"><a href="index.php">RentNono</a></h1>
+            <h1 class="site-logo">
+                <?php if(isset($_SESSION['nombre'])): ?>
+                    <a href="index.php">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></a>
+                <?php else: ?>
+                    <a href="index.php">RentNono</a>
+                <?php endif; ?>
+            </h1>
+
             <nav class="main-nav">
                 <ul>
                     <li><b href="#" class="btn-primary-small" href="index.php">Inicio</b></li>
-                    <li><a href="explorador.php">Explorar</a></li>
+                    <li><a href="explorador.php">Explorar Propiedades</a></li>
                     <li><a href="nosotros.php">Nosotros</a></li>
                     
                     <!-- NOMBRE DE USUARIO O BOTON INICIAR SESION-->
                     <?php if(isset($_SESSION['nombre'])): ?>
-                        <li>Bienvenido, <?php echo $_SESSION['nombre']; ?></li>
+                       
                         <li><a href="database/logout.php">Cerrar sesión</a></li>
                     <?php else: ?>
                         <a id="abrirLogin" class="btn-iniciar-sesion">Iniciar sesión</a>
@@ -45,35 +65,43 @@
                     en Nonogasta</h2>
                 <p>Una plataforma simple e intuitiva para que alquiles y des en alquiler tus objetos y propiedades de 
                     forma segura y eficiente.</p>              
-                <a href="#" class="btn-primary-large">Alquilar</a>
-                <a href="#" class="btn-primary-large">Comprar</a>
-                <a href="#" class="btn-primary-large">Vender</a>
-                <section class="features-section container">
-                    <div class="features-grid">
-                        <div class="feature-item">
-                            <p>Accede como usuario registrado y podras comentar</p>
-                        </div>
-                        <div class="feature-item">
-                            <p>Contactate con el propietrario</p>
-                        </div>
-                        <div class="feature-item">
-                            <p>Crea tu lista de favoritos</p>
-                        </div>
-                    </div>
-                </section>            
-            </div>
-            <div class="search-box">
-                <input list="opciones" type="text" id="buscar" placeholder="Escribe para buscar...">
-                <datalist id="opciones">
-                    <option value="Casa en alquiler">
-                    <option value="Departamento en venta">
-                    <option value="Terreno en Nonogasta">
-                    <option value="Oficina comercial">
-                    <option value="Cabaña turística">
-                </datalist>
-                <button type="button" class="icon" id="btnBuscar">🔍</button>
-            </div>
-        </section>
+        
+        <!-- 🔍 BUSCADOR POR PRECIO -->
+<section class="buscador-precio container" style="margin-top:30px;">
+    <h3>Filtrar por precio</h3>
+
+    <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+        <div>
+            <label>Precio mínimo</label>
+            <input type="number" id="precio_min" placeholder="Ej: 100000" style="padding:8px;">
+        </div>
+
+        <div>
+            <label>Precio máximo</label>
+            <input type="number" id="precio_max" placeholder="Ej: 300000" style="padding:8px;">
+        </div>
+
+        <button id="btnFiltrar" style="padding:10px 20px; cursor:pointer; background:#2d6cdf; border:none; color:white; border-radius:5px;">
+            Aplicar filtros
+        </button>
+
+        <button id="btnReset" style="padding:10px 20px; cursor:pointer; background:#777; border:none; color:white; border-radius:5px;">
+            Reiniciar
+        </button>
+    </div>
+</section>
+
+
+<section class="features-section container" style="margin-top:20px;">
+    <h3>Publicaciones</h3>
+
+    <div class="features-grid" id="gridIndex"></div>
+
+    <p id="mensajeVacio" style="display:none; text-align:center; padding:20px;">
+        No existen publicaciones en ese rango de precio.
+    </p>
+</section>
+</section>
 
         <!--SECCION DE PUBLICACIONES-->
         <section class="features-section container">
@@ -126,76 +154,79 @@
         });
     </script>
 
-<?php if (isset($_GET['logout']) && $_GET['logout'] === 'success'): ?>
-<div id="toast" class="toast-success">
-  <div class="icon-container">
-    <i class="fa-solid fa-circle-check"></i>
-    <span>Sesión cerrada correctamente</span>
-  </div>
-</div>
+    <script>
+// Cambia esto según tu sistema de login
+const usuarioLogueado = <?php echo isset($_SESSION['usuario']) ? 'true' : 'false'; ?>;
 
-<script>
-  // Mostrar el toast
-  const toast = document.getElementById('toast');
-  toast.style.display = 'flex';
-  toast.classList.add('show');
+function toggleFavorito(idPublicacion) {
+    if (!usuarioLogueado) {
+        window.location.href = "login.php"; 
+        return;
+    }
 
-  // Desvanecer y eliminar después de 3 segundos
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 600);
-  }, 3000);
+    const btn = event.currentTarget;
+    btn.classList.toggle("active");
+
+    // Enviar a backend (si querés guardar favoritos de verdad)
+    /*
+    fetch("guardar_favorito.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "id=" + idPublicacion
+    });
+    */
+}
 </script>
+<script>
 
-<style>
-.toast-success {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background-color: #82b16d; /* Verde principal RENTNONO */
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
-  padding: 14px 22px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-  display: none;
-  align-items: center;
-  gap: 10px;
-  z-index: 9999;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease;
+
+// 🌟 Contenedores
+const gridIndex = document.getElementById("gridIndex");
+const mensajeVacio = document.getElementById("mensajeVacio");
+
+// Inputs
+const precioMin = document.getElementById("precio_min");
+const precioMax = document.getElementById("precio_max");
+
+const btnFiltrar = document.getElementById("btnFiltrar");
+const btnReset = document.getElementById("btnReset");
+
+// 🔄 Función para cargar publicaciones
+function cargarPublicaciones() {
+
+    let params = [];
+
+    if (precioMin.value) params.push("precio_min=" + encodeURIComponent(precioMin.value));
+    if (precioMax.value) params.push("precio_max=" + encodeURIComponent(precioMax.value));
+
+    let url = "database/publicaciones.php?ajax=1&" + params.join("&");
+
+    fetch(url)
+        .then(res => res.text())
+        .then(html => {
+            gridIndex.innerHTML = html;
+
+            if (html.trim() === "" || html.includes("No existen")) {
+                mensajeVacio.style.display = "block";
+            } else {
+                mensajeVacio.style.display = "none";
+            }
+        });
 }
 
-.toast-success.show {
-  display: flex;
-  opacity: 1;
-  transform: translateY(0);
-}
+// ▶️ Botón "Aplicar filtros"
+btnFiltrar.addEventListener("click", cargarPublicaciones);
 
-.icon-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 500;
-}
+// 🔄 Botón "Reiniciar"
+btnReset.addEventListener("click", () => {
+    precioMin.value = "";
+    precioMax.value = "";
+    cargarPublicaciones();
+});
 
-.toast-success i {
-  font-size: 1.3em;
-  color: #fff;
-  animation: spinCheck 1s ease-in-out;
-}
-
-/* ✨ Animación de giro del icono */
-@keyframes spinCheck {
-  0% { transform: rotate(0deg) scale(0.8); opacity: 0; }
-  50% { transform: rotate(180deg) scale(1.2); opacity: 1; }
-  100% { transform: rotate(360deg) scale(1); opacity: 1; }
-}
-</style>
-<?php endif; ?>
-
-
+// ▶️ Cargar al iniciar
+document.addEventListener("DOMContentLoaded", cargarPublicaciones);
+</script>
 
 </body>
 </html>

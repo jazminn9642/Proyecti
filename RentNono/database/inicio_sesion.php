@@ -1,30 +1,123 @@
 <?php
-include 'conexion.php';
+include("conexion.php");
+include("session.php");
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $correo = $_POST['correo'] ?? '';
-    $password = $_POST['password'] ?? '';
+if (isset($_POST['iniciarSesion'])) {
+    $correo = $_POST['correo'];
+    $password = $_POST['password'];
 
-    // Buscar al usuario en la tabla de administradores
-    $stmt = $conn->prepare("SELECT * FROM usuario_admin WHERE correo = :correo");
-    $stmt->execute([':correo' => $correo]);
-    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($usuario && password_verify($password, $usuario['password_hash'])) {
-        // ✅ Guardar datos en la sesión
-        $_SESSION['admin_id'] = $usuario['id'];
-        $_SESSION['admin_nombre'] = $usuario['nombre']; // ← guarda el nombre real
-        $_SESSION['admin_correo'] = $usuario['correo'];
+    // 🔹 Primero buscamos en usuario_visitante
+    $stmt = $conn->prepare("SELECT id, nombre, correo, password FROM usuario_visitante
+                            WHERE correo = :correo AND password = :password");
+    $stmt->bindParam(':correo', $correo);
+    $stmt->bindParam(':password', $password);
+    $stmt->execute();
 
-        header("Location: ../admin/users.php");
-        exit;
-    } else {
-        header("Location: ../login.php?error=1");
+
+    if ($stmt->rowCount() === 1) {
+        // ✅ Es un usuario visitante
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+        $_SESSION['id'] = $usuario['id'];
+        $_SESSION['nombre'] = $usuario['nombre'];
+        $_SESSION['correo'] = $usuario['correo'];
+        $_SESSION['rol'] = 'visitante'; // Se asigna manualmente
+
+        // 🧾 LOG: inicio de sesión visitante
+$log = $conn->prepare("
+INSERT INTO logs_actividad (usuario_id, usuario_nombre, rol, accion)
+VALUES (:id, :nombre, :rol, :accion)
+");
+
+$log->execute([
+':id' => $_SESSION['id'],
+':nombre' => $_SESSION['nombre'],
+':rol' => 'visitante',
+':accion' => 'Inicio de sesión'
+]);
+
+
+        header("Location: ../usuario_visitante/ixusuario.php");
         exit;
     }
+
+
+    // 🔹 Si no lo encontró, buscamos en usuario_propietario
+    $stmt2 = $conn->prepare("SELECT id, nombre, correo, password FROM usuario_propietario
+                             WHERE correo = :correo AND password = :password");
+    $stmt2->bindParam(':correo', $correo);
+    $stmt2->bindParam(':password', $password);
+    $stmt2->execute();
+
+
+    if ($stmt2->rowCount() === 1) {
+        // ✅ Es un propietario
+        $usuario = $stmt2->fetch(PDO::FETCH_ASSOC);
+        $_SESSION['id'] = $usuario['id'];
+        $_SESSION['nombre'] = $usuario['nombre'];
+        $_SESSION['correo'] = $usuario['correo'];
+        $_SESSION['rol'] = 'propietario'; // Se asigna manualmente
+
+        // 🧾 LOG: inicio de sesión propietario
+$log = $conn->prepare("
+INSERT INTO logs_actividad (usuario_id, usuario_nombre, rol, accion)
+VALUES (:id, :nombre, :rol, :accion)
+");
+
+$log->execute([
+':id' => $_SESSION['id'],
+':nombre' => $_SESSION['nombre'],
+':rol' => 'propietario',
+':accion' => 'Inicio de sesión'
+]);
+
+
+        header("Location: ../usuario_propietario/index_propietario.php");
+        exit;
+    }
+
+
+    // 🔹 Si no lo encontró, buscamos en usuario_admin
+    $stmt3 = $conn->prepare("SELECT id, nombre, correo, password_hash FROM usuario_admin
+                             WHERE correo = :correo");
+    $stmt3->bindParam(':correo', $correo);
+    $stmt3->execute();
+
+
+    if ($stmt3->rowCount() === 1) {
+        $usuario = $stmt3->fetch(PDO::FETCH_ASSOC);
+       
+        // ⚙️ Verificar contraseña (si usás hash)
+        if (password_verify($password, $usuario['password_hash'])) {
+            $_SESSION['admin_id'] = $usuario['id'];
+            $_SESSION['admin_nombre'] = $usuario['nombre'];
+            $_SESSION['rol'] = 'admin';
+
+            // 🧾 LOG: inicio de sesión administrador
+$log = $conn->prepare("
+INSERT INTO logs_actividad (usuario_id, usuario_nombre, rol, accion)
+VALUES (:id, :nombre, :rol, :accion)
+");
+
+$log->execute([
+':id' => $_SESSION['admin_id'],
+':nombre' => $_SESSION['admin_nombre'],
+':rol' => 'admin',
+':accion' => 'Inicio de sesión'
+]);
+
+            header("Location: ../admin/indexadmin.php");
+            exit;
+        }
+    }
+
+
+    // ❌ Si no se encontró en ninguna tabla
+    header("Location: ../index.php?error=1");
+    exit();
 }
 ?>
+
+
+

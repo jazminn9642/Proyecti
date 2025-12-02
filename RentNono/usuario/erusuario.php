@@ -1,7 +1,7 @@
 <?php
-include("database/publicaciones.php");
-include("database/session.php");
-include("login.php"); 
+include("../database/session.php");
+include("../database/publicaciones.php");
+
 ?>
 
 <!DOCTYPE html>
@@ -9,9 +9,9 @@ include("login.php");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RentNono | Explorador</title>
-    <link rel="stylesheet" href="estilos/estilo.css">
-    <link rel="stylesheet" href="estilos/publicaciones.css">
+    <title>RentNono | Explorador de Usuario</title>
+    <link rel="stylesheet" href="../estilos/estilo.css">
+    <link rel="stylesheet" href="../estilos/publicaciones.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@700&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/a2d9a66f09.js" crossorigin="anonymous"></script>
 </head>
@@ -20,30 +20,24 @@ include("login.php");
 <header class="main-header">
     <div class="container header-content">
         <h1 class="site-logo">
-             <?php if(isset($_SESSION['nombre'])): ?>
-                    <a href="index.php">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></a>
-                <?php else: ?>
-                    <a href="index.php">RentNono</a>
-                <?php endif; ?> 
+            <a href="ixusuario.php">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></a>
         </h1>
 
         <nav class="main-nav">
-                <ul>
-                    <li><a href="index.php">Inicio</a></li>
-                    <li><b href="#" class="btn-primary-small" href="explorador.php">Explorar Propiedades</b></li>
-                    <li><a href="nosotros.php">Nosotros</a></li>
-                    
-                    <!-- NOMBRE DE USUARIO O BOTON INICIAR SESION-->
-                    <?php if(isset($_SESSION['nombre'])): ?>
-                       
-                        <li><a href="database/logout.php">Cerrar sesión</a></li>
-                    <?php else: ?>
-                        <a id="abrirLogin" class="btn-iniciar-sesion">Iniciar sesión</a>
-                    <?php endif; ?>
+            <ul>
+                <li><a href="ixusuario.php">Inicio</a></li>
+                <li><b class="btn-primary-small" href="erusuario.php">Explorar</b></li>
+                <li><a href="nsusuarios.php">Nosotros</a></li>
+                <li><a href="../database/logout.php">Cerrar sesión</a></li>
+            </ul>
         </nav>
     </div>
 </header>
 
+<!-- 🔍 BUSCADOR -->
+<section class="buscador container">
+  <input type="text" id="searchInput" placeholder="Buscar por título o descripción...">
+</section>
 
 <!-- 🏡 FILTROS -->
 <section class="filtros container">
@@ -65,7 +59,10 @@ include("login.php");
           <option value="">Todos</option>
           <option value="casa">Casa</option>
           <option value="departamento">Departamento</option>
+          <option value="local comercial">Local Comercial</option>
           <option value="terreno o lote">Terreno o Lote</option>
+          <option value="galpon">Galpón</option>
+          <option value="camping">Camping</option>
         </select>
       </div>
 
@@ -170,15 +167,19 @@ const filtros = ['operacion','tipo','estado','garaje','precio_max','ambientes','
 const featuresGrid = document.getElementById('featuresGrid');
 const reiniciarBtn = document.getElementById('reiniciarFiltros');
 const noResultsMessage = document.getElementById('noResultsMessage');
+const searchInput = document.getElementById('searchInput');
 
-// 🎯 Cargar publicaciones filtradas
+// 🎯 Cargar publicaciones filtradas y búsqueda
 function cargarPublicaciones() {
     let params = filtros.map(f => {
         const val = document.getElementById(f).value;
         return val ? `${f}=${encodeURIComponent(val)}` : '';
     }).filter(p => p !== '').join('&');
 
-    fetch('database/publicaciones.php?ajax=1&' + params)
+    const searchVal = searchInput.value.trim();
+    if(searchVal) params += (params ? '&' : '') + `busqueda=${encodeURIComponent(searchVal)}`;
+
+    fetch('../database/publicaciones.php?ajax=1&' + params)
         .then(res => res.text())
         .then(html => {
             featuresGrid.innerHTML = html;
@@ -204,36 +205,22 @@ filtros.forEach(f => {
     if(el) el.addEventListener('change', cargarPublicaciones);
 });
 
+// Buscador en tiempo real
+searchInput.addEventListener('input', () => {
+    clearTimeout(searchInput._timer);
+    searchInput._timer = setTimeout(cargarPublicaciones, 300);
+});
+
 // Botón reiniciar
 reiniciarBtn.addEventListener('click', () => {
     filtros.forEach(f => document.getElementById(f).value = '');
+    searchInput.value = '';
     cargarPublicaciones();
 });
 
 // Carga inicial
 document.addEventListener('DOMContentLoaded', cargarPublicaciones);
 </script>
-
-
-<!--HABILITA VENTANAS FLOTANTES DE LOGIN Y REGISTRO-->
-    <script src="script/login.js"></script>
-    <script src="script/infopub.js"></script>
-
-    <!--HABILITA VENTANA FLOTANTE DE MENSAJE DE USUARIO CREADO-->
-    <script>
-        window.addEventListener("DOMContentLoaded", function() {
-            const mensajeExito = document.getElementById("mensajeExito");
-
-            <?php if (isset($_GET['registro']) && $_GET['registro'] === "ok"): ?>
-                mensajeExito.style.display = "flex";
-
-                // Ocultar después de 3 segundos
-                setTimeout(() => {
-                    mensajeExito.style.display = "none";
-                }, 3000);
-            <?php endif; ?>
-        });
-    </script>
 
 </body>
 </html>

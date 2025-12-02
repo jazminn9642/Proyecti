@@ -15,7 +15,14 @@
 <body>
     <header class="main-header">
         <div class="container header-content">
-            <h1 class="site-logo"><a href="index.php">RentNono</a></h1>
+            <h1 class="site-logo">
+                <?php if(isset($_SESSION['nombre'])): ?>
+                    <a href="index.php">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></a>
+                <?php else: ?>
+                    <a href="index.php">RentNono</a>
+                <?php endif; ?>
+            </h1>
+
             <nav class="main-nav">
                 <ul>
                     <li><a href="index.php">Inicio</a></li>
@@ -23,7 +30,6 @@
                     <li><b href="#" class="btn-primary-small" href="nosotros.php">Nosotros</b></li>
 
                     <?php if(isset($_SESSION['nombre'])): ?>
-                        <li>Bienvenido, <?php echo $_SESSION['nombre']; ?></li>
                         <li><a href="database/logout.php">Cerrar sesión</a></li>
                     <?php else: ?>
                         <a id="abrirLogin" class="btn-iniciar-sesion">Iniciar sesión</a>
