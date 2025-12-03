@@ -1,0 +1,92 @@
+body {
+      background: #f5f6fa;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 50px 20px;
+      color: #2d3436;
+    }
+
+    h2 {
+      color: #2d3436;
+      margin-bottom: 20px;
+    }
+
+    /* === ESTILOS DE LAS ESTRELLAS === */
+    .rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+      font-size: 3rem;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .rating input {
+      display: none; /* Oculta los radios */
+    }
+
+    .rating label {
+      color: #ccc;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s;
+      font-size: 3rem;
+    }
+
+    .rating label::before {
+      content: "★";
+    }
+
+    /* Hover: ilumina las estrellas */
+    .rating label:hover,
+    .rating label:hover ~ label {
+      color: #ffca28;
+      transform: scale(1.1);
+    }
+
+    /* Checked: estrellas seleccionadas */
+    .rating input:checked ~ label {
+      color: #ffc107;
+    }
+
+    /* === TEXTAREA Y BOTÓN === */
+    textarea {
+      width: 400px;
+      height: 100px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      resize: none;
+      font-size: 15px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    textarea:focus {
+      border-color: #ffc107;
+      box-shadow: 0 0 5px #ffc107;
+    }
+
+    button {
+      margin-top: 15px;
+      background-color: #ffc107;
+      color: #2d3436;
+      border: none;
+      padding: 10px 25px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #ffb300;
+    }
+
+    .output {
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
